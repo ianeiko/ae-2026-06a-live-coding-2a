@@ -28,7 +28,7 @@ import { VOICE_MODEL, VOICE_SESSION } from "@/lib/voice";
 import { experimental_useRealtime } from "@ai-sdk/react";
 import { gateway } from "ai";
 import { AudioLinesIcon, Loader2Icon, PhoneIcon, PhoneOffIcon } from "lucide-react";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 export default function VoicePage() {
   const [deviceId, setDeviceId] = useState<string>();
@@ -57,15 +57,17 @@ export default function VoicePage() {
     onError: (err) => setError(err.message),
   });
 
-  const releaseMic = useCallback(() => {
+  // Plain functions: the React Compiler memoizes these, and manual useCallback
+  // around the hook's own methods trips its memoization check.
+  const releaseMic = () => {
     stopAudioCapture();
     for (const track of streamRef.current?.getTracks() ?? []) {
       track.stop();
     }
     streamRef.current = null;
-  }, [stopAudioCapture]);
+  };
 
-  const start = useCallback(async () => {
+  const start = async () => {
     setError(undefined);
 
     try {
@@ -80,12 +82,12 @@ export default function VoicePage() {
       releaseMic();
       setError(err instanceof Error ? err.message : "Could not start the call.");
     }
-  }, [connect, deviceId, releaseMic, startAudioCapture]);
+  };
 
-  const stop = useCallback(() => {
+  const stop = () => {
     releaseMic();
     disconnect();
-  }, [disconnect, releaseMic]);
+  };
 
   const isConnected = status === "connected";
   const isConnecting = status === "connecting";
